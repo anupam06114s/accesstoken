@@ -1,47 +1,67 @@
+import os
+import time
+import json
 from flask import Flask, request, jsonify, render_template
 from MajorLoginReq_pb2 import MajorLogin
 from MajorLoginRes_pb2 import MajorLoginRes
-import json
-import time
 
 app = Flask(__name__)
+app.url_map.strict_slashes = False
+
 tokens = {}
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, DELETE'
+    return response
 
 @app.route('/')
 def home():
     return render_template('index.html')
 
-@app.route('/api/config', methods=['GET'])
+@app.route('/api/config', methods=['GET', 'POST', 'OPTIONS'])
+@app.route('/config', methods=['GET', 'POST', 'OPTIONS'])
 def config():
+    if request.method == 'OPTIONS':
+        return '', 200
     return jsonify({
-        "verAddr": "https://accessstoken-i0dx.onrender.com/api/capture",
+        "verAddr": "https://accesstoken-i0dx.onrender.com/api/capture",
         "tokenCapture": True,
         "version": "1.0.0"
     })
 
-@app.route('/api/capture', methods=['POST'])
+@app.route('/api/capture', methods=['GET', 'POST', 'OPTIONS'])
+@app.route('/capture', methods=['GET', 'POST', 'OPTIONS'])
+@app.route('/MajorLogin', methods=['GET', 'POST', 'OPTIONS'])
+@app.route('/MajorLoginReq', methods=['GET', 'POST', 'OPTIONS'])
 def capture():
+    if request.method == 'OPTIONS':
+        return '', 200
+        
     global tokens
     raw = request.get_data()
     
-    try:
-        req = MajorLogin()
-        req.ParseFromString(raw)
-        
-        token = req.access_token
-        open_id = req.open_id
-        
-        if token:
-            tokens['latest'] = {
-                'access_token': token,
-                'open_id': open_id,
-                'timestamp': time.time()
-            }
-            print(f"[+] Token: {token[:20]}...")
-            print(f"[+] Open ID: {open_id}")
+    if raw:
+        try:
+            req = MajorLogin()
+            req.ParseFromString(raw)
             
-    except Exception as e:
-        print(f"[-] Decode error: {e}")
+            token = req.access_token
+            open_id = req.open_id
+            
+            if token:
+                tokens['latest'] = {
+                    'access_token': token,
+                    'open_id': open_id,
+                    'timestamp': time.time()
+                }
+                print(f"[+] Token: {token[:20]}...")
+                print(f"[+] Open ID: {open_id}")
+                
+        except Exception as e:
+            print(f"[-] Decode error: {e}")
     
     res = MajorLoginRes()
     res.account_id = 123456789
@@ -62,4 +82,5 @@ def get_token():
     return jsonify({"error": "No token captured yet"}), 404
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
