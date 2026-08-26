@@ -1,4 +1,3 @@
-import os
 from flask import Flask, request, jsonify, render_template
 from MajorLoginReq_pb2 import MajorLogin
 from MajorLoginRes_pb2 import MajorLoginRes
@@ -6,7 +5,6 @@ import json
 import time
 
 app = Flask(__name__)
-
 tokens = {}
 
 @app.route('/')
@@ -16,7 +14,7 @@ def home():
 @app.route('/api/config', methods=['GET'])
 def config():
     return jsonify({
-        "verAddr": "https://accesstoken-i0dx.onrender.com/api/capture",
+        "verAddr": "https://accessstoken-i0dx.onrender.com/api/capture",
         "tokenCapture": True,
         "version": "1.0.0"
     })
@@ -64,5 +62,4 @@ def get_token():
     return jsonify({"error": "No token captured yet"}), 404
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=5000)
