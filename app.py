@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
 import json
 import time
 
@@ -7,7 +7,7 @@ tokens = {}
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return "✅ Server is running! Use /api/config"
 
 @app.route('/api/config', methods=['GET'])
 def config():
@@ -17,13 +17,14 @@ def config():
         "version": "1.0.0"
     })
 
-@app.route('/api/capture', methods=['POST'])
+@app.route('/api/capture', methods=['POST', 'GET'])
 def capture():
-    global tokens
+    if request.method == 'GET':
+        return "✅ Capture endpoint is working. Send POST request with data.", 200
+    
     raw = request.get_data()
     print(f"[*] Received {len(raw)} bytes")
     
-    # Store raw data as hex for testing
     tokens['latest'] = {
         'access_token': raw.hex()[:64] if raw else "NO_DATA",
         'open_id': "TEST_123",
@@ -37,7 +38,7 @@ def get_token():
     data = tokens.get('latest')
     if data:
         return jsonify(data)
-    return jsonify({"error": "No token captured yet"}), 404
+    return jsonify({"error": "No token yet"}), 404
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=10000)
