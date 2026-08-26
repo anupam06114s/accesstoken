@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Access Token Capture</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .box {
+            background: #1a1a1a;
+            padding: 40px;
+            border-radius: 15px;
+            border: 2px solid #00ff00;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .label {
+            color: #888;
+            margin-top: 15px;
+        }
+
+        .value {
+            background: #0a0a0a;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            word-break: break-all;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #00ff00;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box">
+        <h1>💀 ACCESS TOKEN CAPTURE</h1>
+        <div class="label">📱 Access Token</div>
+        <div class="value" id="token">Not captured yet</div>
+        <div class="label">🆔 Open ID</div>
+        <div class="value" id="openid">Not captured yet</div>
+        <div class="label">📅 Timestamp</div>
+        <div class="value" id="timestamp">Waiting...</div>
+        <div class="status" id="status">⏳ Waiting for token...</div>
+    </div>
+    <script>
+        function refresh() {
+            fetch('/api/get-token')
+                .then(r => r.json())
+                .then(d => {
+                    if (d.access_token) {
+                        document.getElementById('token').textContent = d.access_token;
+                        document.getElementById('openid').textContent = d.open_id;
+                        document.getElementById('timestamp').textContent = new Date(d.timestamp * 1000).toLocaleString();
+                        document.getElementById('status').textContent = '✅ Token Captured!';
+                    } else {
+                        document.getElementById('status').textContent = '⏳ Waiting for token...';
+                    }
+                });
+        }
+        setInterval(refresh, 3000);
+        refresh();
+    </script>
+</body>
+
+</html>
